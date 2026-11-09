@@ -2,6 +2,8 @@
 
 Viewer IFC berbasis browser untuk meninjau model struktur, memilih beberapa elemen, dan menghitung total berat pilihan.
 
+Parser metadata IFC utama ditulis di `ifc_core.py` dan dijalankan di browser melalui Pyodide. JavaScript tetap digunakan untuk menghubungkan UI, WebGL/Three.js, dan Web-IFC yang menghasilkan geometri 3D.
+
 ## Fitur
 
 - Membuka file `.ifc` dari komputer atau dengan drag and drop.
@@ -27,7 +29,11 @@ Viewer IFC berbasis browser untuk meninjau model struktur, memilih beberapa elem
 
 ## Menjalankan
 
-Buka `index.html` di Chrome atau Microsoft Edge. Koneksi internet diperlukan saat aplikasi dimuat agar Three.js, web-ifc, dan WebAssembly parser dapat diambil dari CDN. File IFC dibaca dan diproses di browser; aplikasi tidak mengunggah model.
+Untuk menjalankan lokal, buka PowerShell di folder ini dan jalankan `py -m http.server 8000`, lalu buka `http://localhost:8000`. Koneksi internet diperlukan saat aplikasi dimuat agar Three.js, web-ifc, dan Pyodide dapat diambil dari CDN. File IFC dibaca dan diproses di browser; aplikasi tidak mengunggah model. Pada pemakaian pertama, Pyodide menambah waktu unduh dan startup.
+
+## Jika file IFC besar kehabisan memori
+
+Parser Python hanya menyimpan metadata yang diperlukan, buffer vertex dibagi antara posisi dan normal, dan model lama dilepas sebelum model baru dibuka. Meski begitu, geometri IFC tetap dimuat penuh ke memori browser. Untuk model sangat besar, tutup tab/aplikasi lain, gunakan Chrome atau Edge 64-bit, atau pecah IFC menjadi beberapa zona/disiplin. Jika tetap kehabisan memori, langkah berikutnya adalah menyiapkan geometri yang lebih ringan (misalnya GLB) sebelum dibuka di viewer.
 
 ## Navigasi dan seleksi
 
@@ -46,7 +52,7 @@ Buka `index.html` di Chrome atau Microsoft Edge. Koneksi internet diperlukan saa
 1. Buat repository baru di GitHub.
 2. Pilih **Private** atau **Public** sesuai kebutuhan.
 3. Dari halaman repository, pilih **Add file → Upload files**.
-4. Upload `index.html`, `README.md`, dan `.gitignore` dari folder aplikasi ini.
+4. Upload `index.html`, `ifc_core.py`, `README.md`, dan `.gitignore` dari folder aplikasi ini.
 5. Pilih **Commit changes**.
 
 Jangan unggah IFC proyek ke repository publik kecuali memang ingin membagikannya. `.gitignore` disertakan untuk mencegah file IFC dan CSV pilihan masuk ke Git secara tidak sengaja.
