@@ -59,6 +59,10 @@ def references(raw: str | None) -> list[int]:
     return [int(value) for value in re.findall(r"#(\d+)", raw or "")]
 
 
+def argument(args: list[str], index: int, default: str = "") -> str:
+    return args[index] if 0 <= index < len(args) else default
+
+
 def unit_factors(unit_lines):
     mass_factor, mass_unit = 1.0, "kg"
     length_factor, length_unit = 1.0, "m"
@@ -77,14 +81,14 @@ def unit_factors(unit_lines):
     for args in unit_lines:
         if len(args) < 4:
             continue
-        prefix, name = args[2], args[3]
-        if args[1] == ".MASSUNIT.":
+        prefix, name = argument(args, 2), argument(args, 3)
+        if argument(args, 1) == ".MASSUNIT.":
             if "GRAM" in name:
                 mass_factor = mass_prefixes.get(prefix, 1.0)
                 mass_unit = "kg" if mass_factor == 1 else ("g" if mass_factor < 1 else "t (kg converted)")
             elif "POUND" in name:
                 mass_factor, mass_unit = 0.45359237, "lb"
-        elif args[1] == ".LENGTHUNIT." and "METRE" in name:
+        elif argument(args, 1) == ".LENGTHUNIT." and "METRE" in name:
             length_factor = length_prefixes.get(prefix, 1.0)
             length_unit = {0.001: "mm", 0.01: "cm", 1000.0: "km"}.get(length_factor, "m")
     return mass_factor, mass_unit, length_factor, length_unit
@@ -107,11 +111,12 @@ def parse_ifc_json(source: str) -> str:
             quantity_kind = {"IFCQUANTITYWEIGHT": "weight", "IFCQUANTITYLENGTH": "length", "IFCQUANTITYAREA": "area"}[kind]
             value_index = 3
             if len(args) > value_index:
-                quantities[express_id] = {"name": text_value(args[0]), "value": number_value(args[value_index]), "kind": quantity_kind}
+                quantities[express_id] = {"name": text_value(argument(args, 0)), "value": number_value(argument(args, value_index)), "kind": quantity_kind}
         elif kind == "IFCPROPERTYSINGLEVALUE" and len(args) > 2:
-            name = text_value(args[0])
+            name = text_value(argument(args, 0))
             if re.search(r"weight|length|area|profile|section|thick|size|width|height|depth|dimension|designation|shape|part.?mark|^mark$|^tag$", name, re.I):
-                raw, value = args[2], number_value(args[2])
+                raw = argument(args, 2)
+                value = number_value(raw)
                 string_match = STRING_RE.search(raw)
                 string_value = string_match.group(1).replace("''", "'") if string_match else None
                 if value is not None or string_value:
@@ -119,19 +124,19 @@ def parse_ifc_json(source: str) -> str:
                     quantities[express_id] = {"name": name, "value": value if value is not None else string_value, "kind": quantity_kind}
         elif kind in ("IFCELEMENTQUANTITY", "IFCPROPERTYSET"):
             index = 5 if kind == "IFCELEMENTQUANTITY" else 4
-            sets[express_id] = {"type": kind, "ids": references(args[index] if len(args) > index else "")}
+            sets[express_id] = {"type": kind, "ids": references(argument(args, index))}
         elif kind == "IFCRELDEFINESBYPROPERTIES":
-            property_relations.append({"products": references(args[4] if len(args) > 4 else ""), "set": next(iter(references(args[5] if len(args) > 5 else "")), None)})
+            property_relations.append({"products": references(argument(args, 4)), "set": next(iter(references(argument(args, 5))), None)})
         elif kind == "IFCRELAGGREGATES":
-            aggregate_relations.append({"parent": next(iter(references(args[4] if len(args) > 4 else "")), None), "children": references(args[5] if len(args) > 5 else "")})
+            aggregate_relations.append({"parent": next(iter(references(argument(args, 4))), None), "children": references(argument(args, 5))})
         elif kind == "IFCSIUNIT":
             unit_lines.append(args)
         elif product_candidate and len(args) >= 7:
             products[express_id] = {
-                "type": kind, "guid": text_value(args[0]),
-                "name": text_value(args[2]) or kind.removeprefix("IFC"),
-                "objectType": text_value(args[4]),
-                "tag": text_value(args[7]) if len(args) > 7 else "",
+                "type": kind, "guid": text_value(argument(args, 0)),
+                "name": text_value(argument(args, 2)) or kind.removeprefix("IFC"),
+                "objectType": text_value(argument(args, 4)),
+                "tag": text_value(argument(args, 7)),
             }
 
     element_sets, children, parents = {}, {}, {}
