@@ -11,11 +11,12 @@ Viewer IFC berbasis browser untuk meninjau model struktur, memilih beberapa elem
 - Double-click elemen untuk membuka properti, part mark, nama assembly, dan beratnya.
 - Menampilkan panjang member dan berat langsung pada klik tunggal.
 - Memilih langsung per object atau memilih assembly beserta komponennya.
-- Klik kanan object/assembly untuk menyembunyikannya atau memilih assembly serupa; gunakan menu klik kanan pada area kosong untuk menampilkan kembali item tersembunyi.
+- Klik kanan object untuk memilih item dengan kategori/profil/ukuran serupa, menyembunyikan pilihan, atau mengekspor pilihan ke Excel.
+- Klik kanan area kosong setelah Box select untuk menyembunyikan atau mengekspor semua item yang terpilih. Gunakan menu klik kanan pada area kosong tanpa seleksi untuk menampilkan kembali item tersembunyi.
 - Memilih preset kamera Isometric, Top, Front, Back, Left, Right, atau Bottom.
 - Mengatur sumbu vertikal model ke +X, +Y, +Z, -X, -Y, atau -Z untuk membetulkan orientasi.
-- Mencari nama, GUID, atau mark; memfilter kategori IFC.
-- Mengekspor daftar elemen terpilih ke CSV.
+- Mencari nama item, part mark, nama/mark assembly, GUID, atau kategori IFC.
+- Mengekspor item terpilih ke file Excel yang berisi part mark, nama item, berat, panjang, luas jika tersedia, dan berat per meter atau meter persegi.
 - Memprioritaskan kuantitas `NetWeight`; memakai properti `Weight` sebagai fallback.
 - Menandai elemen tanpa data berat dan mengecualikannya dari penjumlahan.
 - Menghindari hitung ganda ketika assembly dan elemen turunannya sama-sama dipilih.
@@ -27,11 +28,12 @@ Buka `index.html` di Chrome atau Microsoft Edge. Koneksi internet diperlukan saa
 ## Navigasi dan seleksi
 
 - Drag tombol kiri untuk orbit, tombol kanan untuk pan / gerak eye, dan tombol tengah untuk drag / pan.
-- Scroll untuk zoom. Kecepatan orbit, pan, dan zoom diturunkan agar navigasi lebih halus.
+- Scroll untuk zoom. Kecepatan orbit, pan, dan zoom dibuat sedikit lebih responsif.
 - Aktifkan **Box select**, lalu tahan tombol kiri dan drag kotak mengelilingi object. Tekan `Ctrl` sambil drag untuk menambah hasil ke seleksi yang sudah ada.
 - **Per object** memilih hanya elemen yang diklik. **Per assembly** mengelompokkan part yang diklik ke assembly induknya.
 - Klik tunggal menampilkan panjang dan berat pada panel properti. Double-click pada viewport atau daftar membuka properti lengkap; pada assembly, daftar part mark komponennya juga ditampilkan.
-- Klik kanan pada object/assembly menyediakan **Pilih assembly serupa** dan **Sembunyikan assembly**. Klik kanan area kosong untuk **Tampilkan semua yang disembunyikan**.
+- Klik kanan object menyediakan **Pilih item serupa** berdasarkan kategori/profil dan ukuran yang terbaca dari nama atau part mark. Setelah memilih item, klik kanan lalu pilih **Sembunyikan pilihan** atau **Ekspor pilihan ke Excel**.
+- Klik kanan setelah Box select membuka aksi untuk menyembunyikan atau mengekspor hasil seleksi. Klik kanan area kosong tanpa seleksi untuk **Tampilkan semua yang disembunyikan**.
 - Preset kamera mengatur arah pandang. Pilihan sumbu `+Z up` cocok untuk IFC standar; pilih sumbu lain jika model tampil terbalik.
 
 ## Upload ke GitHub
