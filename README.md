@@ -16,7 +16,8 @@ Viewer IFC berbasis browser untuk meninjau model struktur, memilih beberapa elem
 - Memilih preset kamera Isometric, Top, Front, Back, Left, Right, atau Bottom.
 - Mengatur sumbu vertikal model ke +X, +Y, +Z, -X, -Y, atau -Z untuk membetulkan orientasi.
 - Mencari nama item, part mark, nama/mark assembly, GUID, atau kategori IFC.
-- Mengekspor item terpilih ke file Excel yang berisi part mark, nama item, berat, panjang, luas jika tersedia, dan berat per meter atau meter persegi.
+- Mengekspor item terpilih ke file Excel yang berisi part mark, nama item dan assembly, berat, panjang/dimensi, luas jika tersedia, serta berat per meter atau meter persegi. Panjang geometri diperkirakan dari model bila IFC tidak memberi nilai panjang.
+- Nilai desimal pada file Excel ditulis sesuai format angka Indonesia agar tidak terbaca sebagai angka ribuan.
 - Memprioritaskan kuantitas `NetWeight`; memakai properti `Weight` sebagai fallback.
 - Menandai elemen tanpa data berat dan mengecualikannya dari penjumlahan.
 - Menghindari hitung ganda ketika assembly dan elemen turunannya sama-sama dipilih.
