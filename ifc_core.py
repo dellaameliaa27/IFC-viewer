@@ -59,7 +59,7 @@ def references(raw: str | None) -> list[int]:
     return [int(value) for value in re.findall(r"#(\d+)", raw or "")]
 
 
-def unit_factors(lines):
+def unit_factors(unit_lines):
     mass_factor, mass_unit = 1.0, "kg"
     length_factor, length_unit = 1.0, "m"
     mass_prefixes = {
@@ -74,10 +74,7 @@ def unit_factors(lines):
         "$": 1.0, ".DECI.": 0.1, ".CENTI.": 0.01,
         ".MILLI.": 0.001, ".MICRO.": 0.000001, ".NANO.": 1e-9,
     }
-    for line in lines.values():
-        if line["type"] != "IFCSIUNIT":
-            continue
-        args = line["args"]
+    for args in unit_lines:
         if len(args) < 4:
             continue
         prefix, name = args[2], args[3]
@@ -94,14 +91,18 @@ def unit_factors(lines):
 
 
 def parse_ifc_json(source: str) -> str:
-    lines = {}
+    quantities, sets, products = {}, {}, {}
+    property_relations, aggregate_relations, unit_lines = [], [], []
+    quantity_types = {"IFCQUANTITYWEIGHT", "IFCQUANTITYLENGTH", "IFCQUANTITYAREA"}
+    metadata_types = quantity_types | {"IFCPROPERTYSINGLEVALUE", "IFCELEMENTQUANTITY", "IFCPROPERTYSET", "IFCRELDEFINESBYPROPERTIES", "IFCRELAGGREGATES", "IFCSIUNIT"}
+    product_excluded = quantity_types | {"IFCPROPERTYSET", "IFCELEMENTQUANTITY", "IFCPROPERTYSINGLEVALUE", "IFCSIUNIT"}
     for match in ENTITY_RE.finditer(source):
-        express_id = int(match.group(1))
-        lines[express_id] = {"type": match.group(2).upper(), "args": split_args(match.group(3))}
-
-    quantities, sets, property_relations, aggregate_relations = {}, {}, [], []
-    for express_id, line in lines.items():
-        args, kind = line["args"], line["type"]
+        express_id, kind = int(match.group(1)), match.group(2).upper()
+        raw_args = match.group(3)
+        product_candidate = not kind.startswith("IFCREL") and len(raw_args) > 2 and raw_args[0] == "'" and kind not in product_excluded
+        if kind not in metadata_types and not product_candidate:
+            continue
+        args = split_args(raw_args)
         if kind in ("IFCQUANTITYWEIGHT", "IFCQUANTITYLENGTH", "IFCQUANTITYAREA"):
             quantity_kind = {"IFCQUANTITYWEIGHT": "weight", "IFCQUANTITYLENGTH": "length", "IFCQUANTITYAREA": "area"}[kind]
             value_index = 3
@@ -123,6 +124,15 @@ def parse_ifc_json(source: str) -> str:
             property_relations.append({"products": references(args[4] if len(args) > 4 else ""), "set": next(iter(references(args[5] if len(args) > 5 else "")), None)})
         elif kind == "IFCRELAGGREGATES":
             aggregate_relations.append({"parent": next(iter(references(args[4] if len(args) > 4 else "")), None), "children": references(args[5] if len(args) > 5 else "")})
+        elif kind == "IFCSIUNIT":
+            unit_lines.append(args)
+        elif product_candidate and len(args) >= 7:
+            products[express_id] = {
+                "type": kind, "guid": text_value(args[0]),
+                "name": text_value(args[2]) or kind.removeprefix("IFC"),
+                "objectType": text_value(args[4]),
+                "tag": text_value(args[7]) if len(args) > 7 else "",
+            }
 
     element_sets, children, parents = {}, {}, {}
     for relation in property_relations:
@@ -138,7 +148,7 @@ def parse_ifc_json(source: str) -> str:
         for child in relation["children"]:
             parents.setdefault(child, set()).add(parent)
 
-    mass_factor, mass_unit, length_factor, length_unit = unit_factors(lines)
+    mass_factor, mass_unit, length_factor, length_unit = unit_factors(unit_lines)
 
     def linked_quantities(express_id):
         for set_id in element_sets.get(express_id, []):
@@ -219,33 +229,22 @@ def parse_ifc_json(source: str) -> str:
             if parent in seen:
                 continue
             seen.add(parent)
-            parent_type = lines.get(parent, {}).get("type", "")
+            parent_type = products.get(parent, {}).get("type", "")
             if "ASSEMBLY" in parent_type:
                 return parent
             pending.extend(parents.get(parent, set()))
         return None
 
-    def entity_text(express_id, index):
-        entity = lines.get(express_id, {})
-        args = entity.get("args", [])
-        return text_value(args[index]) if len(args) > index else ""
-
     records = {}
-    for express_id, line in lines.items():
-        type_name, args = line["type"], line["args"]
-        # Product records use a GlobalId first; keep shorter IfcProduct subtypes too.
-        if type_name.startswith("IFCREL") or not args or not args[0].startswith("'"):
-            continue
-        guid = text_value(args[0])
-        name = text_value(args[2]) or type_name.removeprefix("IFC")
-        object_type = text_value(args[4])
-        part_mark = text_value(args[7]) or get_part_mark(express_id) or object_type
+    for express_id, product in products.items():
+        type_name = product["type"]
+        guid, name, object_type = product["guid"], product["name"], product["objectType"]
+        part_mark = product["tag"] or get_part_mark(express_id) or object_type
         weight_value, weight_source = get_weight(express_id, type_name)
         length_value, length_source = get_measure(express_id, "length", "length")
         assembly_id = nearest_assembly(express_id, type_name)
-        assembly_line = lines.get(assembly_id, {}) if assembly_id else {}
-        assembly_args = assembly_line.get("args", [])
-        assembly_weight, assembly_weight_source = get_weight(assembly_id, assembly_line.get("type", "IFCELEMENTASSEMBLY")) if assembly_id else (None, "Not provided")
+        assembly_product = products.get(assembly_id, {}) if assembly_id else {}
+        assembly_weight, assembly_weight_source = get_weight(assembly_id, assembly_product.get("type", "IFCELEMENTASSEMBLY")) if assembly_id else (None, "Not provided")
         records[str(express_id)] = {
             "id": express_id, "guid": guid, "name": name, "type": type_name,
             "objectType": object_type, "partMark": part_mark,
@@ -257,8 +256,8 @@ def parse_ifc_json(source: str) -> str:
             "children": children.get(express_id, []),
             "parents": sorted(parents.get(express_id, set())),
             "assemblyId": assembly_id,
-            "assemblyName": text_value(assembly_args[2]) or "Assembly" if assembly_id else "",
-            "assemblyMark": text_value(assembly_args[7]) if assembly_id and len(assembly_args) > 7 else "",
+            "assemblyName": assembly_product.get("name", "Assembly") if assembly_id else "",
+            "assemblyMark": assembly_product.get("tag", "") if assembly_id else "",
             "assemblyWeight": assembly_weight * mass_factor if assembly_weight is not None else None,
             "assemblyWeightSource": assembly_weight_source,
             "group": None, "visible": True,

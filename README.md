@@ -31,6 +31,10 @@ Parser metadata IFC utama ditulis di `ifc_core.py` dan dijalankan di browser mel
 
 Untuk menjalankan lokal, buka PowerShell di folder ini dan jalankan `py -m http.server 8000`, lalu buka `http://localhost:8000`. Koneksi internet diperlukan saat aplikasi dimuat agar Three.js, web-ifc, dan Pyodide dapat diambil dari CDN. File IFC dibaca dan diproses di browser; aplikasi tidak mengunggah model. Pada pemakaian pertama, Pyodide menambah waktu unduh dan startup.
 
+## Jika file IFC besar kehabisan memori
+
+Parser Python hanya menyimpan metadata yang diperlukan, buffer vertex dibagi antara posisi dan normal, dan model lama dilepas sebelum model baru dibuka. Meski begitu, geometri IFC tetap dimuat penuh ke memori browser. Untuk model sangat besar, tutup tab/aplikasi lain, gunakan Chrome atau Edge 64-bit, atau pecah IFC menjadi beberapa zona/disiplin. Jika tetap kehabisan memori, langkah berikutnya adalah menyiapkan geometri yang lebih ringan (misalnya GLB) sebelum dibuka di viewer.
+
 ## Navigasi dan seleksi
 
 - Drag tombol kiri untuk orbit, tombol kanan untuk pan / gerak eye, dan tombol tengah untuk drag / pan.
