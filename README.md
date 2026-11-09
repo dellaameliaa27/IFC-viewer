@@ -16,6 +16,9 @@ Viewer IFC berbasis browser untuk meninjau model struktur, memilih beberapa elem
 - Memilih preset kamera Isometric, Top, Front, Back, Left, Right, atau Bottom.
 - Mengatur sumbu vertikal model ke +X, +Y, +Z, -X, -Y, atau -Z untuk membetulkan orientasi.
 - Mencari nama item, part mark, nama/mark assembly, GUID, atau kategori IFC.
+- Menyembunyikan pilihan dari daftar kiri dengan tombol **Hide pilihan**.
+- Menyembunyikan atau menampilkan satu kategori item, atau memakai **Show only** untuk fokus pada kategori itu saja.
+- Memakai **Show only hasil search** setelah mencari nama/part mark (misalnya `SAG ARRESTOR`) untuk menyisakan hasil pencarian di model.
 - Mengekspor item terpilih ke file Excel yang berisi part mark, nama item dan assembly, berat, panjang/dimensi, luas jika tersedia, serta berat per meter atau meter persegi. Panjang geometri diperkirakan dari model bila IFC tidak memberi nilai panjang.
 - Nilai desimal pada file Excel ditulis sesuai format angka Indonesia agar tidak terbaca sebagai angka ribuan.
 - Memprioritaskan kuantitas `NetWeight`; memakai properti `Weight` sebagai fallback.
@@ -35,6 +38,7 @@ Buka `index.html` di Chrome atau Microsoft Edge. Koneksi internet diperlukan saa
 - Klik tunggal menampilkan panjang dan berat pada panel properti. Double-click pada viewport atau daftar membuka properti lengkap; pada assembly, daftar part mark komponennya juga ditampilkan.
 - Klik kanan object menyediakan **Pilih item serupa** berdasarkan kategori/profil dan ukuran yang terbaca dari nama atau part mark. Setelah memilih item, klik kanan lalu pilih **Sembunyikan pilihan** atau **Ekspor pilihan ke Excel**.
 - Klik kanan setelah Box select membuka aksi untuk menyembunyikan atau mengekspor hasil seleksi. Klik kanan area kosong tanpa seleksi untuk **Tampilkan semua yang disembunyikan**.
+- Tombol **Show all** mengembalikan seluruh item yang disembunyikan oleh hide kategori atau Show only.
 - Preset kamera mengatur arah pandang. Pilihan sumbu `+Z up` cocok untuk IFC standar; pilih sumbu lain jika model tampil terbalik.
 
 ## Upload ke GitHub
